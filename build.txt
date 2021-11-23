@@ -1,0 +1,3 @@
+displayName = Vanillia Bosses Reworked
+author = Duckcast
+version = 0.1
