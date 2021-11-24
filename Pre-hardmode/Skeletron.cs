@@ -291,6 +291,8 @@ namespace GoodBosses
 		}
 		public void SkeltronHeadAI(NPC npc)
 		{
+			float enrageTime = 36000f;
+
             npc.defense = npc.defDefense;
 
 			//Spawn the hands
@@ -325,31 +327,31 @@ namespace GoodBosses
 				}
 			}
 			//enrage conditions (now timer npcd rather than Time of Day
-			if (npc.ai[3] > 36000f && npc.ai[1] != 3f && npc.ai[1] != 2f)
+			if (npc.ai[3] > enrageTime && npc.ai[1] != 3f && npc.ai[1] != 2f)
 			{
 				npc.ai[1] = 2f;
 				Main.PlaySound(SoundID.Roar, (int)npc.position.X, (int)npc.position.Y, 0);
 			}
 
-			int num155 = 0;//number of alive hands
+			int liveHands = 0;//number of alive hands
 			if (Main.expertMode)
 			{
-				for (int num156 = 0; num156 < 200; num156++)	//loop over the first 200 npcs
+				for (int npcCheck = 0; npcCheck < 200; npcCheck++)	//loop over the first 200 npcs
 				{
-					if (Main.npc[num156].active && Main.npc[num156].type == npc.type + 1)	//if alive and a skeletron hand, count it
+					if (Main.npc[npcCheck].active && Main.npc[npcCheck].type == npc.type + 1)	//if alive and a skeletron hand, count it
 					{
-						num155++;
+						liveHands++;
 					}
 				}
-				npc.defense += num155 * 25;	//gain 25 defence for each hand
-				if ((num155 < 2 || (double)npc.life < (double)npc.lifeMax * 0.75) && npc.ai[1] == 0f)
+				npc.defense += liveHands * 25;	//gain 25 defence for each hand
+				if ((liveHands < 2 || (double)npc.life < (double)npc.lifeMax * 0.75) && npc.ai[1] == 0f)
 				{
-					float num157 = 80f;
-					if (num155 == 0)
+					float skullDelay = 80f;
+					if (liveHands == 0)
 					{
-						num157 /= 2f;
+						skullDelay /= 2f;
 					}
-					if (Main.netMode != 1 && npc.ai[2] % num157 == 0f)
+					if (Main.netMode != NetmodeID.MultiplayerClient && npc.ai[2] % skullDelay == 0f)
 					{
 						Vector2 center3 = npc.Center;
 						float num158 = Main.player[npc.target].position.X + (float)(Main.player[npc.target].width / 2) - center3.X;
@@ -358,7 +360,7 @@ namespace GoodBosses
 						if (Collision.CanHit(center3, 1, 1, Main.player[npc.target].position, Main.player[npc.target].width, Main.player[npc.target].height))
 						{
 							float num161 = 3f;
-							if (num155 == 0)
+							if (liveHands == 0)
 							{
 								num161 += 2f;
 							}
@@ -384,6 +386,7 @@ namespace GoodBosses
 				}
 			}
 
+			//idle mode
 			if (npc.ai[1] == 0f)
 			{
 				npc.damage = npc.defDamage;
@@ -403,16 +406,16 @@ namespace GoodBosses
 					npc.netUpdate = true;
 				}
 				npc.rotation = npc.velocity.X / 15f;	//lean into movement
-				float num168 = 0.02f;					//Y acceleration
-				float num169 = 2f;						//Y max speed
-				float num170 = 0.05f;					//X Accelearation
-				float num171 = 8f;						//X max speed
+				float yAccel = 0.02f;					//Y acceleration
+				float ySpeed = 2f;						//Y max speed
+				float xAccel = 0.05f;					//X Accelearation
+				float xSpeed = 8f;						//X max speed
 				if (Main.expertMode)					//Expert mode speed stats
 				{
-					num168 = 0.03f;
-					num169 = 4f;
-					num170 = 0.07f;
-					num171 = 9.5f;
+					yAccel = 0.03f;
+					ySpeed = 4f;
+					xAccel = 0.07f;
+					xSpeed = 9.5f;
 				}
 				if (npc.position.Y > Main.player[npc.target].position.Y - 250f)	//if more than 250 units below
 				{
@@ -420,10 +423,10 @@ namespace GoodBosses
 					{
 						npc.velocity.Y *= 0.98f;
 					}
-					npc.velocity.Y -= num168;			//accelerate by .02 or .03 in expert upwards
-					if (npc.velocity.Y > num169)		//cap speed
+					npc.velocity.Y -= yAccel;			//accelerate by .02 or .03 in expert upwards
+					if (npc.velocity.Y > ySpeed)		//cap speed
 					{
-						npc.velocity.Y = num169;
+						npc.velocity.Y = ySpeed;
 					}
 				}
 				else if (npc.position.Y < Main.player[npc.target].position.Y - 250f) //same but when above
@@ -432,10 +435,10 @@ namespace GoodBosses
 					{
 						npc.velocity.Y *= 0.98f;
 					}
-					npc.velocity.Y += num168;
-					if (npc.velocity.Y < 0f - num169)
+					npc.velocity.Y += yAccel;
+					if (npc.velocity.Y < 0f - ySpeed)
 					{
-						npc.velocity.Y = 0f - num169;
+						npc.velocity.Y = 0f - ySpeed;
 					}
 				}
 				if (npc.position.X + (float)(npc.width / 2) > Main.player[npc.target].position.X + (float)(Main.player[npc.target].width / 2)) //if right of the player
@@ -444,10 +447,10 @@ namespace GoodBosses
 					{
 						npc.velocity.X *= 0.98f;
 					}
-					npc.velocity.X -= num170;			//accelerate by .05 or .07
-					if (npc.velocity.X > num171)		//cap speed
+					npc.velocity.X -= xAccel;			//accelerate by .05 or .07
+					if (npc.velocity.X > xSpeed)		//cap speed
 					{
-						npc.velocity.X = num171;
+						npc.velocity.X = xSpeed;
 					}
 				}
 				if (npc.position.X + (float)(npc.width / 2) < Main.player[npc.target].position.X + (float)(Main.player[npc.target].width / 2)) //if left
@@ -456,13 +459,14 @@ namespace GoodBosses
 					{
 						npc.velocity.X *= 0.98f;
 					}
-					npc.velocity.X += num170;
-					if (npc.velocity.X < 0f - num171)
+					npc.velocity.X += xAccel;
+					if (npc.velocity.X < 0f - xSpeed)
 					{
-						npc.velocity.X = 0f - num171;
+						npc.velocity.X = 0f - xSpeed;
 					}
 				}
 			}
+			//attack mode
 			else if (npc.ai[1] == 1f)
 			{
 				npc.defense -= 10;
@@ -477,68 +481,68 @@ namespace GoodBosses
 					npc.ai[1] = 0f;
 				}
 				npc.rotation += (float)npc.direction * 0.3f;
-				Vector2 vector20 = new Vector2(npc.position.X + (float)npc.width * 0.5f, npc.position.Y + (float)npc.height * 0.5f);	//center of the skull
-				float num172 = Main.player[npc.target].position.X + (float)(Main.player[npc.target].width / 2) - vector20.X;			//target's X - skull's center x
-				float num173 = Main.player[npc.target].position.Y + (float)(Main.player[npc.target].height / 2) - vector20.Y;			//target's Y - skull's center y
-				float num174 = (float)Math.Sqrt(num172 * num172 + num173 * num173);														//Sqrt(prevX^2 + prevY^2)
-				float num175 = 1.5f;
+				Vector2 skullCenter = new Vector2(npc.position.X + (float)npc.width * 0.5f, npc.position.Y + (float)npc.height * 0.5f);	//center of the skull
+				float xDist = Main.player[npc.target].position.X + (float)(Main.player[npc.target].width / 2) - skullCenter.X;			//target's X - skull's center x
+				float yDist = Main.player[npc.target].position.Y + (float)(Main.player[npc.target].height / 2) - skullCenter.Y;			//target's Y - skull's center y
+				float realDist = (float)Math.Sqrt(xDist * xDist + yDist * yDist);														//Sqrt(prevX^2 + prevY^2)
+				float speedFactor = 1.5f;
 				if (Main.expertMode)
 				{
 					npc.damage = (int)((double)npc.defDamage * 1.3);
-					num175 = 4f;
-					if (num174 > 150f)
+					speedFactor = 4f;
+					if (realDist > 150f)
 					{
-						num175 *= 1.05f;
+						speedFactor *= 1.05f;
 					}
-					if (num174 > 200f)
+					if (realDist > 200f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 250f)
+					if (realDist > 250f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 300f)
+					if (realDist > 300f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 350f)
+					if (realDist > 350f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 400f)
+					if (realDist > 400f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 450f)
+					if (realDist > 450f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 500f)
+					if (realDist > 500f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 550f)
+					if (realDist > 550f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					if (num174 > 600f)
+					if (realDist > 600f)
 					{
-						num175 *= 1.1f;
+						speedFactor *= 1.1f;
 					}
-					switch (num155)	//makes the head faster in expert mode for each dead hand
+					switch (liveHands)	//makes the head faster in expert mode for each dead hand
 					{
 						case 0:
-							num175 *= 1.2f;
+							speedFactor *= 1.2f;
 							break;
 						case 1:
-							num175 *= 1.1f;
+							speedFactor *= 1.1f;
 							break;
 					}
 				}
-				num174 = num175 / num174;
-				npc.velocity.X = num172 * num174;
-				npc.velocity.Y = num173 * num174;
+				realDist = speedFactor / realDist;
+				npc.velocity.X = xDist * realDist;
+				npc.velocity.Y = yDist * realDist;
 			}
 			//enrage mode
 			else if (npc.ai[1] == 2f)	
@@ -570,20 +574,20 @@ namespace GoodBosses
 			}
 
 			//spawn blood dusts
-			if (npc.ai[1] != 2f && npc.ai[1] != 3f && npc.type != 68 && (num155 != 0 || !Main.expertMode))
+			if (npc.ai[1] != 2f && npc.ai[1] != 3f && npc.type != NPCID.DungeonGuardian && (liveHands != 0 || !Main.expertMode))
 			{
-				int num179 = Dust.NewDust(new Vector2(npc.position.X + (float)(npc.width / 2) - 15f - npc.velocity.X * 5f, npc.position.Y + (float)npc.height - 2f), 30, 10, 5, (0f - npc.velocity.X) * 0.2f, 3f, 0, default(Color), 2f);
-				Main.dust[num179].noGravity = true;
-				Main.dust[num179].velocity.X *= 1.3f;
-				Main.dust[num179].velocity.X += npc.velocity.X * 0.4f;
-				Main.dust[num179].velocity.Y += 2f + npc.velocity.Y;
-				for (int num180 = 0; num180 < 2; num180++)
+				int dustNew = Dust.NewDust(new Vector2(npc.position.X + (float)(npc.width / 2) - 15f - npc.velocity.X * 5f, npc.position.Y + (float)npc.height - 2f), 30, 10, DustID.Blood, (0f - npc.velocity.X) * 0.2f, 3f, 0, default(Color), 2f);
+				Main.dust[dustNew].noGravity = true;
+				Main.dust[dustNew].velocity.X *= 1.3f;
+				Main.dust[dustNew].velocity.X += npc.velocity.X * 0.4f;
+				Main.dust[dustNew].velocity.Y += 2f + npc.velocity.Y;
+				for (int i = 0; i < 2; i++)
 				{
-					num179 = Dust.NewDust(new Vector2(npc.position.X, npc.position.Y + 120f), npc.width, 60, 5, npc.velocity.X, npc.velocity.Y, 0, default(Color), 2f);
-					Main.dust[num179].noGravity = true;
-					Dust dust = Main.dust[num179];
+					dustNew = Dust.NewDust(new Vector2(npc.position.X, npc.position.Y + 120f), npc.width, 60, DustID.Blood, npc.velocity.X, npc.velocity.Y, 0, default(Color), 2f);
+					Main.dust[dustNew].noGravity = true;
+					Dust dust = Main.dust[dustNew];
 					dust.velocity -= npc.velocity;
-					Main.dust[num179].velocity.Y += 5f;
+					Main.dust[dustNew].velocity.Y += 5f;
 				}
 			}
 
