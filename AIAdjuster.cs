@@ -6,7 +6,7 @@ namespace GoodBosses
 {
     public partial class NPCRework : GlobalNPC
     {
-        public bool preAi(NPC npc)
+        public override bool PreAI(NPC npc)
         {
             switch (npc.type)
             {
@@ -17,7 +17,7 @@ namespace GoodBosses
                     SkeltronHeadAI(npc);
                     return false;
             }
-            return true;
+            return base.PreAI(npc);
         }
     }
 }
