@@ -323,13 +323,13 @@ namespace GoodBosses
 				//if the next closest target is also dead or fucked off, start despawning
 				if (Main.player[npc.target].dead || Math.Abs(npc.position.X - Main.player[npc.target].position.X) > 2000f || Math.Abs(npc.position.Y - Main.player[npc.target].position.Y) > 2000f)
 				{
-					npc.ai[1] = 3f;
+					npc.ai[0] = 4f;
 				}
 			}
-			//enrage conditions (now timer npcd rather than Time of Day
-			if (npc.ai[3] > enrageTime && npc.ai[1] != 3f && npc.ai[1] != 2f)
+			//enrage conditions (now timer based rather than Time of Day
+			if (npc.ai[3] > enrageTime && npc.ai[0] != 4f && npc.ai[0] != 3f)
 			{
-				npc.ai[1] = 2f;
+				npc.ai[0] = 3f;
 				Main.PlaySound(SoundID.Roar, (int)npc.position.X, (int)npc.position.Y, 0);
 			}
 
@@ -344,64 +344,29 @@ namespace GoodBosses
 					}
 				}
 				npc.defense += liveHands * 25;	//gain 25 defence for each hand
-				if ((liveHands < 2 || (double)npc.life < (double)npc.lifeMax * 0.75) && npc.ai[1] == 0f)
-				{
-					float skullDelay = 80f;
-					if (liveHands == 0)
-					{
-						skullDelay /= 2f;
-					}
-					if (Main.netMode != NetmodeID.MultiplayerClient && npc.ai[2] % skullDelay == 0f)
-					{
-						Vector2 center3 = npc.Center;
-						float num158 = Main.player[npc.target].position.X + (float)(Main.player[npc.target].width / 2) - center3.X;
-						float num159 = Main.player[npc.target].position.Y + (float)(Main.player[npc.target].height / 2) - center3.Y;
-						float num160 = (float)Math.Sqrt(num158 * num158 + num159 * num159);
-						if (Collision.CanHit(center3, 1, 1, Main.player[npc.target].position, Main.player[npc.target].width, Main.player[npc.target].height))
-						{
-							float num161 = 3f;
-							if (liveHands == 0)
-							{
-								num161 += 2f;
-							}
-							float num162 = Main.player[npc.target].position.X + (float)Main.player[npc.target].width * 0.5f - center3.X + (float)Main.rand.Next(-20, 21);
-							float num163 = Main.player[npc.target].position.Y + (float)Main.player[npc.target].height * 0.5f - center3.Y + (float)Main.rand.Next(-20, 21);
-							float num164 = (float)Math.Sqrt(num162 * num162 + num163 * num163);
-							num164 = num161 / num164;
-							num162 *= num164;
-							num163 *= num164;
-							Vector2 vector19 = new Vector2(num162 * 1f + (float)Main.rand.Next(-50, 51) * 0.01f, num163 * 1f + (float)Main.rand.Next(-50, 51) * 0.01f);
-							vector19.Normalize();
-							vector19 *= num161;
-							vector19 += npc.velocity;
-							num162 = vector19.X;
-							num163 = vector19.Y;
-							int num165 = 17;
-							int num166 = 270;
-							center3 += vector19 * 5f;
-							int num167 = Projectile.NewProjectile(center3.X, center3.Y, num162, num163, num166, num165, 0f, Main.myPlayer, -1f);
-							Main.projectile[num167].timeLeft = 300;
-						}
-					}
-				}
 			}
 
 			//idle mode
-			if (npc.ai[1] == 0f)
+			if (npc.ai[0] == 1f)
 			{
 				npc.damage = npc.defDamage;
 				npc.ai[2] += 1f;
 				if (npc.ai[2] >= 800f && !Main.expertMode)
 				{
 					npc.ai[2] = 0f;
-					npc.ai[1] = 1f;
+					npc.ai[0] = 2f;
 					npc.TargetClosest();
 					npc.netUpdate = true;
 				}
 				else if(npc.ai[2] >= 600f)
                 {
 					npc.ai[2] = 0f;
-					npc.ai[1] = 1f;
+					npc.ai[0] = 2f;
+					int randRoll = Main.rand.Next(6);
+					if (randRoll + liveHands <= 1)
+					{
+						npc.ai[0] = 5f;
+					}
 					npc.TargetClosest();
 					npc.netUpdate = true;
 				}
@@ -467,70 +432,22 @@ namespace GoodBosses
 				}
 			}
 			//attack mode
-			else if (npc.ai[1] == 1f)
+			else if (npc.ai[0] == 2f)
 			{
-				npc.defense -= 10;
 				npc.ai[2] += 1f;
-				if (npc.ai[2] == 2f)
+				if (npc.ai[2] == 1)       //pick a direction to dash from
 				{
-					Main.PlaySound(SoundID.Roar, (int)npc.position.X, (int)npc.position.Y, 0);
+					npc.ai[1] = (Main.rand.Next(2) * 2) - 1;
 				}
-				if (npc.ai[2] >= 400f)
-				{
-					npc.ai[2] = 0f;
-					npc.ai[1] = 0f;
-				}
-				npc.rotation += (float)npc.direction * 0.3f;
-				Vector2 skullCenter = new Vector2(npc.position.X + (float)npc.width * 0.5f, npc.position.Y + (float)npc.height * 0.5f);	//center of the skull
-				float xDist = Main.player[npc.target].position.X + (float)(Main.player[npc.target].width / 2) - skullCenter.X;			//target's X - skull's center x
-				float yDist = Main.player[npc.target].position.Y + (float)(Main.player[npc.target].height / 2) - skullCenter.Y;			//target's Y - skull's center y
-				float realDist = (float)Math.Sqrt(xDist * xDist + yDist * yDist);														//Sqrt(prevX^2 + prevY^2)
+				float leadTime = 90f;
+				float holdTime = 60f;
+				float dashTime = 40f;
 				float speedFactor = 1.5f;
 				if (Main.expertMode)
 				{
 					npc.damage = (int)((double)npc.defDamage * 1.3);
 					speedFactor = 4f;
-					if (realDist > 150f)
-					{
-						speedFactor *= 1.05f;
-					}
-					if (realDist > 200f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 250f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 300f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 350f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 400f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 450f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 500f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 550f)
-					{
-						speedFactor *= 1.1f;
-					}
-					if (realDist > 600f)
-					{
-						speedFactor *= 1.1f;
-					}
-					switch (liveHands)	//makes the head faster in expert mode for each dead hand
+					switch (liveHands)  //makes the head faster in expert mode for each dead hand
 					{
 						case 0:
 							speedFactor *= 1.2f;
@@ -540,12 +457,96 @@ namespace GoodBosses
 							break;
 					}
 				}
-				realDist = speedFactor / realDist;
-				npc.velocity.X = xDist * realDist;
-				npc.velocity.Y = yDist * realDist;
+				if (Main.expertMode)
+                {
+					leadTime = 60f;
+					holdTime = 30f;
+                }
+				if (npc.ai[2] < leadTime)       //move to above the player
+				{
+					Vector2 skullCenter = new Vector2(npc.position.X + (float)npc.width * 0.5f, npc.position.Y + (float)npc.height * 0.5f);					//center of the skull
+					float xDist = (Main.player[npc.target].position.X + (384f * npc.ai[1])) + (float)(Main.player[npc.target].width / 2) - skullCenter.X;	//24 tiles horiz
+					float yDist = (Main.player[npc.target].position.Y - 128f) + (float)(Main.player[npc.target].height / 2) - skullCenter.Y;				//8 tiles up
+					float realDist = (float)Math.Sqrt(xDist * xDist + yDist * yDist);																		//distance to target
+					
+					realDist = speedFactor / realDist;
+					npc.velocity.X = xDist * realDist;
+					npc.velocity.Y = yDist * realDist;
+
+				}
+				else if (npc.ai[2] > leadTime)	//dash chargeup
+                {
+					npc.defense -= 10;
+					npc.rotation += (float)npc.direction * 0.3f;
+
+					npc.velocity.X = 0;
+					npc.velocity.Y = 0;
+				}
+				else							//roar when starting dash
+				{
+					Main.PlaySound(SoundID.Roar, (int)npc.position.X, (int)npc.position.Y, 0);
+					npc.rotation += (float)npc.direction * 0.3f;
+				}
+				if (npc.ai[2] > leadTime + holdTime)//dash
+                {
+					npc.velocity.X = -3f * npc.ai[1];
+					npc.velocity.Y = 1.5f;
+					if (Main.expertMode)
+                    {
+						npc.velocity.X *= 2f;
+						npc.velocity.Y *= 2f;
+						dashTime /= 2;
+					}
+				}
+				if (npc.ai[2] >= leadTime + holdTime + dashTime) //reset to idle mode
+				{
+					npc.ai[0] = 1f;
+					npc.ai[1] = 0f;
+					npc.ai[2] = 0f;
+				}
 			}
+			//Summon Skull Attack
+			else if (npc.ai[0] == 5f)
+			{
+				npc.ai[2] += 1f;
+				float slowRate = 1 - npc.ai[2] / 100;
+				if (npc.velocity.Y != 0f)		//slow down
+				{
+					npc.velocity.Y *= slowRate;
+				}
+				if (npc.velocity.X != 0f)
+				{
+					npc.velocity.X *= slowRate;
+				}
+				if (npc.ai[2] == 30f)
+				{
+					Main.PlaySound(SoundID.Roar, (int)npc.position.X, (int)npc.position.Y, 0);
+				}
+				if (npc.ai[2] == 61f)
+                {
+					//spawn the skulls
+					int numbSkull = Main.rand.Next(3);
+					if (Main.expertMode)
+                    {
+						numbSkull += Main.rand.Next(2) + 1;
+                    }
+					numbSkull = (numbSkull * 2) + 3;
+					for (int i = 0; i < numbSkull; i++)
+					{
+						float randoffset = (float)Math.Sin(((float)i - .5f) * (float)(Math.PI / 1));
+						randoffset *= (Main.rand.Next(5) * 5 * i);
+						int newHand = NPC.NewNPC((int)(Main.player[npc.target].position.X + (randoffset * 5)), (int)Main.player[npc.target].position.Y + (Main.screenHeight / 2) + 32, 34, npc.whoAmI);
+						Main.npc[newHand].netUpdate = true;
+					}
+				}
+				if (npc.ai[2] > 90f)
+				{
+					npc.ai[2] = 300f;
+					npc.ai[0] = 1f;
+				}
+            }
 			//enrage mode
-			else if (npc.ai[1] == 2f)	
+			else if (npc.ai[0] == 3f)	
 			{
 				npc.damage = 1000;
 				npc.defense = 9999;
@@ -559,7 +560,7 @@ namespace GoodBosses
 				npc.velocity.Y = num177 * num178;
 			}
 			//despawn mode
-			else if (npc.ai[1] == 3f)
+			else if (npc.ai[0] == 4f)
 			{
 				npc.velocity.Y += 0.1f;
 				if (npc.velocity.Y < 0f)
@@ -574,7 +575,7 @@ namespace GoodBosses
 			}
 
 			//spawn blood dusts
-			if (npc.ai[1] != 2f && npc.ai[1] != 3f && npc.type != NPCID.DungeonGuardian && (liveHands != 0 || !Main.expertMode))
+			if (npc.ai[0] != 3f && npc.ai[0] != 4f && npc.type != NPCID.DungeonGuardian && (liveHands != 0 || !Main.expertMode))
 			{
 				int dustNew = Dust.NewDust(new Vector2(npc.position.X + (float)(npc.width / 2) - 15f - npc.velocity.X * 5f, npc.position.Y + (float)npc.height - 2f), 30, 10, DustID.Blood, (0f - npc.velocity.X) * 0.2f, 3f, 0, default(Color), 2f);
 				Main.dust[dustNew].noGravity = true;
