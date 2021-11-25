@@ -334,15 +334,15 @@ namespace GoodBosses
 			}
 
 			int liveHands = 0;//number of alive hands
+			for (int npcCheck = 0; npcCheck < 200; npcCheck++)  //loop over the first 200 npcs
+			{
+				if (Main.npc[npcCheck].active && Main.npc[npcCheck].type == npc.type + 1)   //if alive and a skeletron hand, count it
+				{
+					liveHands++;
+				}
+			}
 			if (Main.expertMode)
 			{
-				for (int npcCheck = 0; npcCheck < 200; npcCheck++)	//loop over the first 200 npcs
-				{
-					if (Main.npc[npcCheck].active && Main.npc[npcCheck].type == npc.type + 1)	//if alive and a skeletron hand, count it
-					{
-						liveHands++;
-					}
-				}
 				npc.defense += liveHands * 25;	//gain 25 defence for each hand
 			}
 
@@ -434,11 +434,17 @@ namespace GoodBosses
 			//attack mode
 			else if (npc.ai[0] == 2f)
 			{
+				float direction;
 				npc.ai[2] += 1f;
-				if (npc.ai[2] == 1)       //pick a direction to dash from
-				{
-					npc.ai[1] = (Main.rand.Next(2) * 2) - 1;
-				}
+				direction = Main.player[npc.target].position.X - npc.position.X;	//move towards closer side
+				if (direction > 0)
+                {
+					direction = -1;
+                }
+				else
+                {
+					direction = 1;
+                }
 				float leadTime = 90f;
 				float holdTime = 60f;
 				float dashTime = 40f;
@@ -465,10 +471,15 @@ namespace GoodBosses
 				if (npc.ai[2] < leadTime)       //move to above the player
 				{
 					Vector2 skullCenter = new Vector2(npc.position.X + (float)npc.width * 0.5f, npc.position.Y + (float)npc.height * 0.5f);					//center of the skull
-					float xDist = (Main.player[npc.target].position.X + (384f * npc.ai[1])) + (float)(Main.player[npc.target].width / 2) - skullCenter.X;	//24 tiles horiz
+					float xDist = (Main.player[npc.target].position.X + (384f * direction)) + (float)(Main.player[npc.target].width / 2) - skullCenter.X;	//24 tiles horiz
 					float yDist = (Main.player[npc.target].position.Y - 128f) + (float)(Main.player[npc.target].height / 2) - skullCenter.Y;				//8 tiles up
 					float realDist = (float)Math.Sqrt(xDist * xDist + yDist * yDist);																		//distance to target
 					
+					for (float i = realDist; i > 500f; i -= 200f)
+                    {
+						speedFactor *= 1.1f;
+                    }
+
 					realDist = speedFactor / realDist;
 					npc.velocity.X = xDist * realDist;
 					npc.velocity.Y = yDist * realDist;
@@ -489,8 +500,8 @@ namespace GoodBosses
 				}
 				if (npc.ai[2] > leadTime + holdTime)//dash
                 {
-					npc.velocity.X = -3f * npc.ai[1];
-					npc.velocity.Y = 1.5f;
+					npc.velocity.X = -4f * direction;
+					npc.velocity.Y = 2.5f;
 					if (Main.expertMode)
                     {
 						npc.velocity.X *= 2f;

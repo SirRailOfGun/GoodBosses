@@ -28,7 +28,7 @@ namespace GoodBosses
                 scalar += 1f;
                 Vector2 drawOrigin = new Vector2(Main.npcTexture[npc.type].Width * 0.5f, npc.height * 0.5f);
                 Vector2 drawPos = npc.position - Main.screenPosition + drawOrigin + new Vector2(0f, npc.gfxOffY);
-                Color color = npc.GetAlpha(drawColor) * .5f;
+                Color color = npc.GetAlpha(drawColor) * .25f;
                 spriteBatch.Draw(Main.npcTexture[npc.type], drawPos, npc.frame, color, npc.rotation, drawOrigin, (npc.scale * scalar), SpriteEffects.None, 0f);
             }
             return base.PreDraw(npc, spriteBatch, drawColor);
